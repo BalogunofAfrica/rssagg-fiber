@@ -1,7 +1,13 @@
 package main
 
-import "net/http"
+import (
+	"github.com/gofiber/fiber/v2"
+)
 
-func handlerError(w http.ResponseWriter, r *http.Request) {
-	respondWithError(w, 400, "Something went wrong")
+func handlerError(c *fiber.Ctx) error {
+	type ErrorResponse struct {
+		Error string `json:"error"`
+	}
+
+	return c.Status(400).JSON(ErrorResponse{Error: "Something went wrong"})
 }

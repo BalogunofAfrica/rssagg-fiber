@@ -2,15 +2,16 @@ package auth
 
 import (
 	"errors"
-	"net/http"
 	"strings"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 // GetAPIKey - extracts api key from request header
 // Example:
 // Authorization: Apikey (insert key here)
-func GetAPIKey(headers http.Header) (string, error) {
-	val := headers.Get("Authorization")
+func GetAPIKey(c *fiber.Ctx) (string, error) {
+	val := c.Get("Authorization")
 	if val == "" {
 		return "", errors.New(("no authentication info found"))
 	}

@@ -1,7 +1,13 @@
 package main
 
-import "net/http"
+import (
+	"github.com/gofiber/fiber/v2"
+)
 
-func handlerReadiness(w http.ResponseWriter, r *http.Request) {
-	respondWithJSON(w, 200, struct{}{})
+func handlerReadiness(c *fiber.Ctx) error {
+	type Response struct {
+		Message string `json:"message"`
+	}
+
+	return c.JSON(Response{Message: "Hello there"})
 }

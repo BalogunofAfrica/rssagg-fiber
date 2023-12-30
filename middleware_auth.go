@@ -2,29 +2,30 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/balogunofafrica/rssagg/internal/auth"
 	"github.com/balogunofafrica/rssagg/internal/database"
+	"github.com/gofiber/fiber/v2"
 )
 
-type authHandler func(http.ResponseWriter, *http.Request, database.User) 
+type authHandler func(*fiber.Ctx, database.User) error
 
-
-func (cfg *apiConfig) middlewareAuth(handler authHandler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		apiKey, err := auth.GetAPIKey(r.Header)
+func (cfg *apiConfig) middlewareAuth(handler authHandler) func(*fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
+		apiKey, err := auth.GetAPIKey(c)
 		if err != nil {
-			respondWithError(w, 403, fmt.Sprintf("Auth error %v", err))
-			return
+			return c.Status(403).JSON(fiber.Map{
+				"error": fmt.Sprintf("Auth error %v", err),
+			})
 		}
 
-		user, err := cfg.DB.GetUserByAPIKey(r.Context(), apiKey)
+		user, err := cfg.DB.GetUserByAPIKey(c.Context(), apiKey)
 		if err != nil {
-			respondWithError(w, 400, fmt.Sprintf("Could not get user %v", err))
-			return
+			return c.Status(400).JSON(fiber.Map{
+				"error": fmt.Sprintf("Could not get user %v", err),
+			})
 		}
 
-		handler(w, r, user)
+		return handler(c, user)
 	}
-}	
+}

@@ -1,55 +1,55 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/balogunofafrica/rssagg/internal/database"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
-func (apiCfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
+func (apiCfg *apiConfig) handlerCreateUser(c *fiber.Ctx) error {
 	type parameters struct {
 		Name string `json:"name"`
 	}
+	params := &parameters{}
 
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
+	err := c.BodyParser(params)
+
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Bad request %v", err))
-		return
+		return c.Status(400).JSON(fiber.Map{
+			"message": fmt.Sprintf("Bad request %v", err),
+		})
 	}
 
-	user, err := apiCfg.DB.CreateUser(r.Context(), database.CreateUserParams{
-		ID: uuid.New(),
+	user, err := apiCfg.DB.CreateUser(c.Context(), database.CreateUserParams{
+		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
-		Name: params.Name,
+		Name:      params.Name,
 	})
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Could not create user %v", err))
-		return
+		return c.Status(400).SendString(fmt.Sprintf("Could not create user %v", err))
 	}
 
-	respondWithJSON(w, 201, databaseUserToUser(user))
+	return c.Status(201).JSON(databaseUserToUser(user))
 }
 
-func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request, user database.User) {
-	respondWithJSON(w, 200, databaseUserToUser(user))
+func (apiCfg *apiConfig) handlerGetUser(c *fiber.Ctx, user database.User) error {
+	return c.Status(200).JSON(databaseUserToUser(user))
 }
 
-func (apiCfg *apiConfig) handlerGetPostsForUser(w http.ResponseWriter, r *http.Request, user database.User) {
-	posts, err := apiCfg.DB.GetPostsForUser(r.Context(), database.GetPostsForUserParams{
+func (apiCfg *apiConfig) handlerGetPostsForUser(c *fiber.Ctx, user database.User) error {
+	posts, err := apiCfg.DB.GetPostsForUser(c.Context(), database.GetPostsForUserParams{
 		UserID: user.ID,
-		Limit: 10,
+		Limit:  10,
 	})
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Could not get posts %v", err))
-		return
+		return c.Status(400).JSON(fiber.Map{
+			"message": fmt.Sprintf("Could not get posts %v", err),
+		})
 	}
 
-	respondWithJSON(w, 200, databasePostsToPosts(posts))
+	return c.Status(200).JSON(databasePostsToPosts(posts))
 }
