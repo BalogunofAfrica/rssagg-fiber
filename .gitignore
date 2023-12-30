@@ -1,3 +1,5 @@
 .vscode
 rssagg
-.env*
+.env
+.env.*
+tmp/

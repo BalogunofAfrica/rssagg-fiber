@@ -14,3 +14,7 @@ migrate-down:
 .PHONY: generate-client
 generate-client:
 	sqlc generate
+
+.PHONY: dev
+dev:
+	air
